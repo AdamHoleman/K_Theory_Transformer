@@ -1,4 +1,4 @@
-# K_Theory_Transformer
+# K Theory Transformer
 
 This is part of an ongoing project to apply machine learning to the computation of algebraic K-theory.
 

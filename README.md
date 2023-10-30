@@ -2,7 +2,17 @@
 
 This is part of an ongoing project to apply machine learning to the computation of algebraic $K$-theory.
 
-<center> <h2> What is algebraic K-theory?</h2> </center>
+# Table of Contents
+1. [What is algebraic K-theory?](#k-theory)
+2. [Goals of the project](#goals)
+3. [Data collection](#data)
+     1. [Computational considerations](#gooddata)
+4. [Model architecture and training](#model)
+5. [Probing experiments](#probes)
+      1. [Location of probes](#locations)
+      2. [Results](#results)
+
+<center> <h2> What is algebraic K-theory? <a name = "k-theory"></a> </h2> </center>
 
 Algebraic $K$-theory is a mathematical invariant of rings, algebraic varieties, or more general mathematical objects depending on the context. Given a ring $R$, algebraic $K$-theory assigns to $R$ a sequence of abelian groups
    $$K_{r}(R), r \in \mathbb{N}$$
@@ -12,7 +22,10 @@ The modern version of algebraic K-theory was introduced by Daniel Quillen in 197
 
 Classical results of Hesselholt and Madsen as well as recent advances of Antieau, Krause, and Nikolaus have made possible the collection of a large dataset describing the algebraic $K$-theory of a certain class of rings. The goal of this project is to bring to bear the techniques of deep learning to this newly available data and hopefully extract new insights in to the nature of the this enigmatic mathematical invariant.
 
-<center> <h2> Goal of the Project</h2></center>
+
+
+
+<center> <h2> Goals of the Project <a name = "goals"></a></h2></center>
 
 The goal of this project is to produce a dataset describing the algebraic $K$-theory of truncated polynomial rings, train a very small transformer model to predict the $K$-groups from simple numerical invariants of the input, and then apply interpretability techniques to the internals of the trained transformer to see if we can reconstruct known mathematical properties of algebraic $K$-theory.
 
@@ -20,7 +33,10 @@ The hardest part of this is the interpretability work. Ideally, we would like to
 
 Moreover, the class of truncated polynomial rings is really a toy case for the class of finite chain rings, whose algebraic $K$-theory appears within reach thanks to recent advances of Antieau, Krause, and Nikolaus. It seems possible that the methods described here may aid cutting edge research on algebraic $K$-theory if they can be fleshed out enough.
 
-<center> <h2> Data Collection </h2> </center>
+
+
+
+<center> <h2> Data Collection <a name = "data"></a> </h2> </center>
 
 For this stage of the project, we focus our attention on the class of truncated polynomial rings over finite fields:
   $$R = \mathbb{F}_{p}[x]/(x^e)$$
@@ -48,7 +64,7 @@ where $p$ is a prime number. In this setting, a classical result of Hesselholt a
 
 Understanding why this algorithm works requires significant mathematical background (for the adventurous reader, this is equivalent to combining Theorem 1 and Lemma 2 in Martin Speirs' paper 'On the K-Theory of Truncated Polynomial Rings Revisited'). On the other hand, if we accept the validity of this algorithm, it gives us a means to produce a sequential dataset describing the $K$-groups of truncated polynomial rings. In particular, we can train a transformer/RNN/LSTM to auto-regressively predict the algebraic $K$-groups of truncated polynomial rings.
 
-<h3> <ins>Computational Considerations </ins></h3>
+<h3> <ins>Computational Considerations </ins> <a name = "gooddata"></a></h3>
 We now describe some of the considerations that go in to using this algorithm to produce a dataset which allows us to efficiently and accurately train an autoregressive model.
 In particular, we create a dataset whose labels differ slightly from the list given as the output of Algorithm 1 (to decrease the sequence length when we generate large datasets) and discuss the importance of including a large number of primes in the dataset.
 
@@ -89,7 +105,10 @@ This is a massive improvement over a more naive implementation and highlights th
 
 
 
-<h2>Model Architecture and Training</h2>
+
+
+
+<h2>Model Architecture and Training <a name = "model"></a></h2>
 
 The following is all implemented in the jupyter notebook 'training.ipynb'.
 
@@ -113,17 +132,76 @@ We generate a dataset of 2 million examples (as described in the previous sectio
 
 
 
-<h2> Probing Experiments</h2>
+<h2> Probing Experiments <a name = "probes"></a></h2>
 
 Our first tool to understand the internals of the trained model is to insert linear probes at various points within the model. Algorithm 1 gives us a wealth of features to probe for. As we will see, various features of relevance to the algorithm which generated the dataset become linearly accessible to the activations at different points of the model. By detecting these locations within the model and tracking which features the model appears to learn, we begin to get a sense of how the model is performing its computation.
 
-<h3><ins> Location of Probes</ins></h3>
+<h3><ins> Location of Probes</ins> <a name = "locations"></a></h3>
 
 There are three points in the model where we probe the activations for different features: after the residual connection following the two attention mechanisms, the hidden layer of the MLP, and at the residual connection following the MLP.
 
 Notice that at this last probe point, the model can access the true solution with 94% accuracy.
 
-<h3> <ins> Results of Experiments </ins></h3>
+<h3> <ins> Description of Experiments and Results </ins></h3>
+
+
+<h4> <ins> The 'total_summands' probe: </ins> <a name = "results"></a></h4>
+
+Consider a labelled datapoint $(p, r, e), (h_{1},..., h_{k})$. The 'total_summands' probing objective is the sum
+   $$ \text{target} = \sum_{i=1}^{k} h_{i} $$
+which is the $p$-based logarithm of the order of $K_{2r-1}(\mathbb{F}_{p}[x]/(x^e)$. This could be useful information for an autoregressive model for a variety of reasons and is a mathematically compelling feature of the data. 
+
+We view this as a classification problem whose number of classes is the vocabulary size of the dataset.
+
+The model appears to not utilize this information, as we cannot successfully probe for it even at the final layer of the transformer.
+
+
+
+<h4> <ins> The 'ue_prime' probe: </ins></h4>
+
+One of the first steps in Algorithm 1 above is to extract two numerical features from $(p, r, e)$ - namely $u$ and $e'$, which are characterized by the property that $e'$ is not divisble by $p$ and $e = p^{u} e'$. Since these are crucial ingredients within the algorithm and are intimately related to one another (it seems implausible to find one of these numbers without finding the other as a natural byproduct), we probe for both of these simultaneously. 
+
+   $$ \text{target} = (u, e') $$
+
+We view this as a classification problem with 2 class dimensions and 41 classes in each dimension (since the largest possible value of $e'$ is 40 in the probe dataset).
+
+The model appears to successfully learn this feature (with >99% accuracy) by the first probe point, thus only relying on the attention mechanism to extract it.
+
+
+
+<h4> <ins> The 're' probe:</ins></h4>
+
+Another crucial ingredient in Algorithm 1 is the computation of $r*e$. Note that multiplication tends to be non-trivial for neural networks to learn.
+   $$ \text{target} = re$$
+
+We view this as a classification task whose number of classes is the vocabulary size of the dataset.
+
+The model appears to successfully learn this feature.
+
+
+
+<h4> <ins> The 'p_div_count' probe:</ins></h4>
+
+Algorithm 1 makes use of the set of integers in the interval $[1, re]$ which are not divisible by $p$. We would like to probe for this information, but since we have altered Algorithm 1 to form a computationally convenient dataset, we should similarly recast the problem of finding this set of integers to a form which is comparable to the task we have trained the model on. Whereas Algorithm 1 makes use of a function $h$ on this set, our reformulation of the labels only counts the size of the preimage of this function. So we should similarly count the number of integers in the interval $[1, re]$ which are not divisible by $p$.
+
+   $$\text{target} = \text{number of integers } m \in [1,re] \text{ which are divisible by } p.$$
+
+We view this as a classification task whose number of classes is the vocabulary size of the dataset.
+
+The model appears to successfully learn this feature.
+
+
+<h4> <ins> The 'e_prime_div_count' probe:</ins></h4>
+
+Algorithm 1 makes use of a function $h$ on the set $\{m \in [1, re] \big| (m,p) =1\}$ and the function is piecewise defined based on whether or not $m$ is divisible by $e'$. Following the reasoning in the discussion of the previous probe, we should count the number of these integers which are divisble by $e'$.
+
+   $$\text{target} = \text{number of integers } m \in [1,re] \text{ which are divisible by } e'.$$
+
+We view this as a classification task whose number of classes is the vocabulary size of the dataset.
+
+The model appears to successfully learn this feature.
+
+
 
 
 

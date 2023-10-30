@@ -110,9 +110,13 @@ This is a massive improvement over a more naive implementation and highlights th
 
 <h2>Model Architecture and Training <a name = "model"></a></h2>
 
+<img align ="left" height="500" src="Transformer.png">
+
 The following is all implemented in the jupyter notebook 'training.ipynb'.
 
 We use a basic transformer model, following the paper 'Attention is All You Need'. Each layer consists of a masked self attention mechanism applied to the target sequence (to which we append a start token of 0 for padding), followed by an attention mechanism where the queries and keys arise from the input values $(p, r, e)$. The residual stream is then fed through a single-hidden-layer MLP. After each of the two attention mechanisms and the MLP layer, we apply dropout to the output of the layer, add the output back in to the residual stream and apply a layer normalization. The final operation is to linearly project the residual stream to the logits of a categorical distribution of size $(\text{sequence length}, \text{vocabulary size})$.
+
+
 
 For now, we will focus our attention on the following hyperparameter setup:
 <ul>
@@ -125,6 +129,8 @@ For now, we will focus our attention on the following hyperparameter setup:
    <li> Sequence Length = 14 (from the data)</li>
 </ul>
 
+<br>
+
 <h3> <ins> Results </ins></h3>
 
 We generate a dataset of 2 million examples (as described in the previous section) and create a train/validation split of 160,000/40,000. We train the model with the Adam optimizer with a learning rate of .001. Without adjusting any further hyperparameters, we are able to achieve a classification accuracy of over 94% on the validation set within 50 epochs.
@@ -134,13 +140,19 @@ We generate a dataset of 2 million examples (as described in the previous sectio
 
 <h2> Probing Experiments <a name = "probes"></a></h2>
 
+<img align ="left" height="500" src="Transformer_w_probes.png">
+
 Our first tool to understand the internals of the trained model is to insert linear probes at various points within the model. Algorithm 1 gives us a wealth of features to probe for. As we will see, various features of relevance to the algorithm which generated the dataset become linearly accessible to the activations at different points of the model. By detecting these locations within the model and tracking which features the model appears to learn, we begin to get a sense of how the model is performing its computation.
 
 <h3><ins> Location of Probes</ins> <a name = "locations"></a></h3>
 
 There are three points in the model where we probe the activations for different features: after the residual connection following the two attention mechanisms, the hidden layer of the MLP, and at the residual connection following the MLP.
 
-Notice that at this last probe point, the model can access the true solution with 94% accuracy.
+All probing experiments will be performed with linear probes and the probing experiments are all classification tasks. See the next section for explicit descriptions of these tasks.
+
+Notice that at this last probe point, the model can linearly access the true solution with 94% accuracy. 
+
+<br>
 
 <h3> <ins> Description of Experiments and Results </ins></h3>
 

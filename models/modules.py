@@ -153,6 +153,7 @@ class probeable_decoder_model(nn.Module):
       out = self.normalizations[i](out + residual)
 
       #last probe check
+      probe_depth -=1
       if probe_depth == 0:
         return out
 

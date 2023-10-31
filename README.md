@@ -11,6 +11,7 @@ This is part of an ongoing project to apply machine learning to the computation 
 5. [Probing experiments](#probes)
       1. [Location of probes](#locations)
       2. [Results](#results)
+6. [Next steps](#next)
 
 <center> <h2> What is algebraic K-theory? <a name = "k-theory"></a> </h2> </center>
 
@@ -110,7 +111,7 @@ This is a massive improvement over a more naive implementation and highlights th
 
 <h2>Model Architecture and Training <a name = "model"></a></h2>
 
-<img align ="left" height="500" src="Transformer.png">
+<img align ="left" height="500" src="images/Transformer.png">
 
 The following is all implemented in the jupyter notebook 'training.ipynb'.
 
@@ -140,7 +141,7 @@ We generate a dataset of 2 million examples (as described in the previous sectio
 
 <h2> Probing Experiments <a name = "probes"></a></h2>
 
-<img align ="left" height="500" src="Transformer_w_probes.png">
+<img align ="left" height="500" src="images/Transformer_w_probes.png">
 
 Our first tool to understand the internals of the trained model is to insert linear probes at various points within the model. Algorithm 1 gives us a wealth of features to probe for. As we will see, various features of relevance to the algorithm which generated the dataset become linearly accessible to the activations at different points of the model. By detecting these locations within the model and tracking which features the model appears to learn, we begin to get a sense of how the model is performing its computation.
 
@@ -159,21 +160,25 @@ Notice that at this last probe point, the model can linearly access the true sol
 
 <h4> <ins> The 'total_summands' probe: </ins> <a name = "results"></a></h4>
 
+<img align ="left" height="300" src="images/total_summands.png">
+
 Consider a labelled datapoint $(p, r, e), (h_{1},..., h_{k})$. The 'total_summands' probing objective is the sum
-   $$ \text{target} = \sum_{i=1}^{k} h_{i} $$
+   $$\text{target} = \sum_{i=1}^{k} h_{i} $$
 which is the $p$-based logarithm of the order of $K_{2r-1}(\mathbb{F}_{p}[x]/(x^e)$. This could be useful information for an autoregressive model for a variety of reasons and is a mathematically compelling feature of the data. 
 
 We view this as a classification problem whose number of classes is the vocabulary size of the dataset.
 
-The model appears to not utilize this information, as we cannot successfully probe for it even at the final layer of the transformer.
+The model appears to not utilize this information, as we cannot successfully probe for it at any layer of the model.
 
 
 
 <h4> <ins> The 'ue_prime' probe: </ins></h4>
 
+<img align ="left" height="300" src="images/ue_prime.png">
+
 One of the first steps in Algorithm 1 above is to extract two numerical features from $(p, r, e)$ - namely $u$ and $e'$, which are characterized by the property that $e'$ is not divisble by $p$ and $e = p^{u} e'$. Since these are crucial ingredients within the algorithm and are intimately related to one another (it seems implausible to find one of these numbers without finding the other as a natural byproduct), we probe for both of these simultaneously. 
 
-   $$ \text{target} = (u, e') $$
+   $$\text{target} = (u, e') $$
 
 We view this as a classification problem with 2 class dimensions and 41 classes in each dimension (since the largest possible value of $e'$ is 40 in the probe dataset).
 
@@ -183,8 +188,10 @@ The model appears to successfully learn this feature (with >99% accuracy) by the
 
 <h4> <ins> The 're' probe:</ins></h4>
 
+<img align ="left" height="300" src="images/re.png">
+
 Another crucial ingredient in Algorithm 1 is the computation of $r*e$. Note that multiplication tends to be non-trivial for neural networks to learn.
-   $$ \text{target} = re$$
+   $$\text{target} = re$$
 
 We view this as a classification task whose number of classes is the vocabulary size of the dataset.
 
@@ -193,6 +200,8 @@ The model appears to successfully learn this feature.
 
 
 <h4> <ins> The 'p_div_count' probe:</ins></h4>
+
+<img align ="left" height="300" src="images/p_div_count.png">
 
 Algorithm 1 makes use of the set of integers in the interval $[1, re]$ which are not divisible by $p$. We would like to probe for this information, but since we have altered Algorithm 1 to form a computationally convenient dataset, we should similarly recast the problem of finding this set of integers to a form which is comparable to the task we have trained the model on. Whereas Algorithm 1 makes use of a function $h$ on this set, our reformulation of the labels only counts the size of the preimage of this function. So we should similarly count the number of integers in the interval $[1, re]$ which are not divisible by $p$.
 
@@ -205,13 +214,48 @@ The model appears to successfully learn this feature.
 
 <h4> <ins> The 'e_prime_div_count' probe:</ins></h4>
 
-Algorithm 1 makes use of a function $h$ on the set $\{m \in [1, re] \big| (m,p) =1\}$ and the function is piecewise defined based on whether or not $m$ is divisible by $e'$. Following the reasoning in the discussion of the previous probe, we should count the number of these integers which are divisble by $e'$.
+<img align ="left" height="300" src="images/e_prime_div_count.png">
 
+Algorithm 1 makes use of a function $h$ on the set $\{m \in [1, re] \big| (m,p) =1\}$ and the function is piecewise defined based on whether or not $m$ is divisible by $e'$. Following the reasoning in the discussion of the previous probe, we should count the number of these integers which are divisble by $e'$.
+<br>
    $$\text{target} = \text{number of integers } m \in [1,re] \text{ which are divisible by } e'.$$
 
 We view this as a classification task whose number of classes is the vocabulary size of the dataset.
 
 The model appears to successfully learn this feature.
+
+
+<h4> <ins> Some Observations </ins></h4>
+
+In several of the above cases, the model learns a feature at some layer and then appears to forget this information by the final layer. This could suggest that the feature has served its purpose in some intermediate calculation by the final residual connection and the model has chosen to overwrite any information dedicated to that feature. Another possibility is that the feature simply isn't important to the model's functioning, and we are able to successfully probe for it incidentally. Additional work is needed to investigate this.
+
+
+
+
+
+
+<h2> Next steps <a name = "next"></a></h2>
+
+The probing experiments listed above begin to give some insight in to the inner workings of the $K$-theory transformer, but we're still a ways off from being able to 'reverse engineer' the underlying algorithm (a success here would be to recover an algorithm equivalent to Algorithm 1 which was comparably simple and demonstrate that the transformer was essentially carrying out this algorithm). Ultimately, this is a test case that we hope to apply to situations where the analogue of Algorithm 1 is not known, so we will also need to consider ways of discovering the salient features used by the model without knowing them in advance.
+
+<h3> <ins> Interventional Experiments for Hypothesis Testing </ins></h3>
+
+The probing experiments allow us to formulate hypotheses about the output of the model and we could test these hypotheses by intervening on the activations. 
+
+<ins> Example: </ins> We know the model has access to the parameter $u$ and can count the number, $N_{true}$, of integers $m \in [1, re]$ which are divisible by $e'$ but not by $p$. Given our knowledge of Algorithm 1, it's reasonable to hypothesize that the model uses this number to increase the logit corresponding to $u$ in the output by a factor proportional to the number of integers in this count. To test this, we could intervene on the activations at the MLP layer altering them to correspond to a different count
+     $$N_{true} \to N_{intervened}. $$
+We could then forward these altered activations through the model and measure the change in the logits at output. If our hypothesis is correct, we should be able to connect the change in the feature $\Delta N = |N_{true} - N_{intervened}|$ to a change in the logits corresponding to $u$.
+
+Performing these interventional experiments will require some additional tooling to be built. This is in progress.
+
+
+<h3> <ins> Additional Probing Experiments </ins></h3>
+
+In order to arrive at a set of hypotheses which encompass the entirety of Algorithm 1 and thus could, in theory, be responsible for a mechanistic description of the model, we will need to expand the set of probing experiments. The tooling for this is already built and a more thorough set of probing experiments is in development.
+
+<h3> <ins> Detecting Salient Features in Other Settings </ins></h3>
+
+Ultimately, we would like to train a similar model on a broader dataset which encompasses input where Algorithm 1 is no longer valid. In particular, we would like to discover features that are relevant to the computation of algebraic $K$-theory more generally. There are several recent papers (e.g. 'Towards Monosemanticity: Decomposing Language Models With Dictionary Learning' Bricken et. al and 'Sparse Autoencoders Find Highly Interpretable Model Directions' by Cunnungham et. al.) which provide a framework for approaching such problems. I hope to carry out analogous work in the context of this project, but this is a bit longer term and is conditional on more success in the toy case.
 
 
 

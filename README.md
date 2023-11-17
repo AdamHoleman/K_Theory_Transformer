@@ -134,7 +134,7 @@ For now, we will focus our attention on the following hyperparameter setup:
 
 <h3> <ins> Results </ins></h3>
 
-We generate a dataset of 2 million examples (as described in the previous section) and create a train/validation split of 160,000/40,000. We train the model with the Adam optimizer with a learning rate of .001. Without adjusting any further hyperparameters, we are able to achieve a classification accuracy of over 94% on the validation set within 50 epochs.
+We generate a dataset of 2 million examples (as described in the previous section) and create a train/validation split of 160,000/40,000. We train the model with the Adam optimizer with a learning rate of .0001. Without adjusting any further hyperparameters, we are able to achieve a classification accuracy of over 98% on the validation set within 60 epochs.
 
 
 

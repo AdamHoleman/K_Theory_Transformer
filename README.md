@@ -141,6 +141,8 @@ We generate a dataset of 2 million examples (as described in the previous sectio
 
 <h2> Probing Experiments <a name = "probes"></a></h2>
 
+**Note:** These experiments were performed on a model which achieved 94% validation accuracy. The newest version of the model attains 98% validation accuracy, but these experiments have not been performed on this more accurate model.
+
 <img align ="left" height="500" src="images/Transformer_w_probes.png">
 
 Our first tool to understand the internals of the trained model is to insert linear probes at various points within the model. Algorithm 1 gives us a wealth of features to probe for. As we will see, various features of relevance to the algorithm which generated the dataset become linearly accessible to the activations at different points of the model. By detecting these locations within the model and tracking which features the model appears to learn, we begin to get a sense of how the model is performing its computation.

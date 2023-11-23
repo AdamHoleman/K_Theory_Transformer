@@ -255,7 +255,7 @@ In order to arrive at a set of hypotheses which encompass the entirety of Algori
 
 <h3> <ins> Detecting Salient Features in Other Settings </ins></h3>
 
-Ultimately, we would like to train a similar model on a broader dataset which encompasses input where Algorithm 1 is no longer valid. In particular, we would like to discover features that are relevant to the computation of algebraic $K$-theory more generally. There are several recent papers (e.g. 'Towards Monosemanticity: Decomposing Language Models With Dictionary Learning' Bricken et. al and 'Sparse Autoencoders Find Highly Interpretable Model Directions' by Cunnungham et. al.) which provide a framework for approaching such problems. I hope to carry out analogous work in the context of this project, but this is a bit longer term and is conditional on more success in the toy case.
+Ultimately, we would like to train a similar model on a broader dataset which encompasses input where Algorithm 1 is no longer valid. In particular, we would like to discover features that are relevant to the computation of algebraic $K$-theory more generally. There are several recent papers (e.g. 'Towards Monosemanticity: Decomposing Language Models With Dictionary Learning' Bricken et. al and 'Sparse Autoencoders Find Highly Interpretable Model Directions' by Cunningham et. al.) which provide a framework for approaching such problems. I am currently carrying out such experiments in the toy case of truncated polynomial rings.
 
 
 

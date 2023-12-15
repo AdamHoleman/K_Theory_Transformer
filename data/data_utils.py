@@ -97,13 +97,12 @@ def prepare_input(K_r):
 def accuracy(model, iterator):
   error_counter = 0
   size = 0
-  for re, K_r in iterator:
+  for re, K_r, labels in iterator:
     size += re.size(0) #keep track of batch sizes
-    input = prepare_input(K_r)
 
-    pred = model(re, input)
+    pred = model(re, K_r)
 
-    error = (torch.argmax(pred, dim=2) - K_r).cpu().numpy()
+    error = (torch.argmax(pred, dim=2) - labels).cpu().numpy()
     errors = numpy.any(error, axis = 1)
     error_counter += numpy.sum(errors.astype(int))
 

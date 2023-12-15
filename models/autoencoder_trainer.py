@@ -19,6 +19,10 @@ class Encoder_Trainer:
 		self.config = config
 		self.iter = 0
 
+		#ok this is hacky, but I need the sequence length...
+		x = train_dataset[0]
+		self.seq_len = x.size(0)
+
 		# take over whatever gpus are on the system
 		self.device = 'cpu'
 		if torch.cuda.is_available():
@@ -37,7 +41,7 @@ class Encoder_Trainer:
 
 	def plot_logdensity(self, neuron_fires):
 		#plots a histogram of the log-densities of the latent variable
-		log_density = np.log10(neuron_fires.cpu().numpy()/(8*len(self.train_dataset)) + 1e-10)
+		log_density = np.log10(neuron_fires.cpu().numpy()/(self.seq_len*len(self.train_dataset)) + 1e-10)
 
 		N, bins, patches = plt.hist(log_density, bins=60, range = (max(-7, min(log_density)),max(log_density)), weights = np.ones(len(log_density))/len(log_density))
 		fracs = N/N.max()

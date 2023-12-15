@@ -5,21 +5,24 @@ from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 from data.data_utils import ue_prime
 
-
-""" the probe_dataset class requires a configuration of the following form:
+"""
+the activation_dataset class requires a configuration of the following form:
 
 config = {
     'probe_depth': num,
-    'model' : model,
-    'state_dict' : path,
+    'model' : model, #this is the model whose features we want to extract/probe
     'probe_target' : string, #This will be fed into a function which extracts labels based on a predefined function
-    'dataset' : dataset, #we can create the train/test split afterwards, or call this two different times on a predetermined split
+    'dataset' : dataset, 
     'device' : device, #may want to use a gpu for this.
-
 }
+
+We need to alter the following class. The new name will be 'activation_dataset' and we will use this class both to train probes and to train sparse auto-encoders.
+  - The one delicate thing here is the labels. The probe datasets will have non-trivial labels whereas the sparse auto-encoder dataset will not.
+  - We know we want to train probes and sparse auto-encoders, but we will likely want additional experiments down the line. What to expect?
 """
 
-class probe_dataset(Dataset):
+class activation_dataset(Dataset):
+
   #Consists of activations and labels.
   def __init__(self, config):
 
@@ -33,29 +36,32 @@ class probe_dataset(Dataset):
 
     for i in tqdm(range(self.data_len)):
       train_acts = self.get_acts(config['model'], config['dataset'], i)
-      re, K_r = config['dataset'][i]
+      re, K_r, _ = config['dataset'][i]
       e, r, p = re
-      train_labels = get_probe_labels(e, r, p, K_r, config['probe_target'])
+
+      if config['probe_target'] is not None:
+        train_labels = get_probe_labels(e, r, p, K_r, config['probe_target'])
+        self.labels.append(train_labels)
+      else:
+        self.labels = None
 
       self.activations.append(train_acts.detach().cpu())
-      self.labels.append(train_labels)
 
 
   def get_acts(self, model, data, idx):
     with torch.no_grad():
       model.eval()
-      re, K_r = data[idx]
-      K_r = self.prepare_input(K_r)
-      act = model(re.unsqueeze(0).to(self.device), K_r.unsqueeze(0).to(self.device), self.config['probe_depth'])
+      re, inp, K_r = data[idx]
+      act = model(re.unsqueeze(0).to(self.device), inp.unsqueeze(0).to(self.device), self.config['probe_depth'])
 
     return act
 
-  def prepare_input(self, K_r):
-    #Adds a start token to target sequence to prep for auto-regressive transformer
-    return torch.cat((torch.zeros(1), K_r), dim = 0)[0:K_r.size(0)].long()
 
   def __getitem__(self, idx):
-    return self.activations[idx].squeeze(), self.labels[idx]
+    if self.labels:
+      return self.activations[idx].squeeze(), self.labels[idx]
+    else:
+      return self.activations[idx].squeeze()
 
   def __len__(self):
     return self.data_len
@@ -69,6 +75,20 @@ def get_probe_labels(e, r, p, K_r, experiment):
   """
 
   with torch.no_grad():
+
+    if experiment == 'pe_prime':
+      #counts the number of integers between 1 and re which are divisible by e' but not by p.
+      count = 0
+      u, e_prime = ue_prime(p,e)
+      idx = e_prime.item()
+
+      while idx <= (r*e).item():
+        if idx % p != 0:
+          count += 1
+        idx += e_prime.item()
+
+      return torch.tensor([count]).long()
+
 
     if experiment == 'total_summands':
       '''

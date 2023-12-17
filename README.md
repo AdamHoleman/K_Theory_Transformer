@@ -320,10 +320,14 @@ For example, neuron 2047 fires exclusively at position 0, neuron 9143 fires exlc
 
 The location specific neurons often exhibit interpretable behavior. I'm in the process of organizing the learned features in to a compelling story right now so I won't say much here. For now, I will simply give an example of a highly specific feature.
 
+Neuron 9256 fires exclusively at the first position, and so its effect on the output logits will govern the model's predictions for the number of $\mathbb{Z}/p^{2}$ summands present in the $K$-theory. Intriguingly, neuron 9256 fires exclusively on datapoints where there is a single $\mathbb{Z}/p^2$ summand. Such datapoints only account for about 3% of all the examples in the data.
+
+
 
 <img align ="left" height="300" src="images/neuron_9256_summands.png">
 
-Neuron 9256 fires exclusively at the first position, and so its effect on the output logits will govern the model's predictions for the number of $\mathbb{Z}/p^{2}$ summands present in the $K$-theory. Intriguingly, neuron 9256 fires exclusively on datapoints where there is a single $\mathbb{Z}/p^2$ summand. Such datapoints only account for about 3% of all the examples in the data.
+
+<br> 
 
 Moreover, due to the auto-regressive mask in the transformer model, the neuron doesn't have access to any information about the number of $\mathbb{Z}/p^2$ summands other than information implicitly present in the input.
 

@@ -284,15 +284,12 @@ The system is clearly overdetermined, so we enforce some additional constraints:
    <li> The autoencoder can overcome the sparsity construct by scaling a sparse latent variable in the decoding stage. To prevent this maladaptive strategy, we enforce that the columns of $W^{dec}$ to be of unit norm. This imposes constraints on the gradients of the decoder (namely that the gradient is in fact orthogonal to the weights themselves - fun exercise in identifying the tangent bundle of the unit sphere) which we manually impose after every backward pass.  </li>
 </ul>
 
+The plot below exhibits the log-density of the learned features for the 16384-dimensional autoencoder after 5 epochs with a sparsity of $0.001$.
+
 
 <img align ="left" height="300" src="images/log_density.png">
 
 For the current round of experiments, the autoencoder is trained using a random subset of 700,000 examples from the data used to train the model (we couldn't use all 2,000,000 due to memory constraints). Every epoch, we measure the portion of training samples on which each coordinate in the latent variable activates. 
-
-
-For the model with 16384 neurons trained with a sparsity value of $.001$, the log-density of the neuron activations after 5 epochs is given below.
-
-
 
 
 Unlike Bricken et. al., we actually don't obtain a bimodal distribution, seeming to completely avoid the 'ultra-low density cluster' of loc. cit. This doesn't feel especially surprising given how fundamentally different the models and data are.

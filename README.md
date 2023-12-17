@@ -1,4 +1,4 @@
-# K Theory Transformer
+# Applying mechanistic interpretability to algebraic K Theory 
 
 This is part of an ongoing project to apply machine learning to the computation of algebraic $K$-theory.
 
@@ -11,7 +11,10 @@ This is part of an ongoing project to apply machine learning to the computation 
 5. [Probing experiments](#probes)
       1. [Location of probes](#locations)
       2. [Results](#results)
-6. [Next steps](#next)
+6. [Identifying features](#feats)
+      1. [Training a sparse autoencoder](#encoder)
+      2. [Inperpreting features](#interp)
+7. [Next steps](#next)
 
 <center> <h2> What is algebraic K-theory? <a name = "k-theory"></a> </h2> </center>
 
@@ -230,6 +233,83 @@ The model appears to successfully learn this feature.
 <h4> <ins> Some Observations </ins></h4>
 
 In several of the above cases, the model learns a feature at some layer and then appears to forget this information by the final layer. This could suggest that the feature has served its purpose in some intermediate calculation by the final residual connection and the model has chosen to overwrite any information dedicated to that feature. Another possibility is that the feature simply isn't important to the model's functioning, and we are able to successfully probe for it incidentally. Additional work is needed to investigate this.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h2> Identifying features <a name = "feats"></a></h2>
+
+
+The probing experiments give us some insight in to the global behavior of the internal activations of the trained transformer. On the other hand, they suffer from two drawbacks:
+<ul>
+   <li> They require us to know what features we're looking for in advance (and thus are of limited help in contexts where our understanding is limited). </li>
+   <li> They don't offer insight in to how the model is using the features in downstream tasks. </li>
+</ul>
+
+
+One recent approach to interpreting learned features that overcomes both of these weaknesses is through training a sparse autoencoder to reconstruct the internal activations of the model. This is motivated by the theory of superposition and has resulted in some really excellent interpretability work (Bricken et. al. and Cunningham et. al.).
+
+We are going to investigate this approach in our setting, training a sparse autoencoder to extract learned features from the hidden layer of the MLP in our model. We will then attempt to interpret these learned features and compare them to our knowledge of K-theory.
+
+
+
+
+
+
+
+
+<h3> Training a sparse autoencoder <a name = 'encoder'></a> </h3>
+
+
+We train an autoencoder on the hidden layer of the MLP with latent dimensions of 8192, and 16384 for 5 and 10 epochs. Our architectural strategies follow the paper 'Towards Monosemanticity: Decomposing Language Models With Dictionary Learning' by Bricken et. al. Denoting by $x$the activations of the model at the hidden layer, the autoencoder is given by
+  $$ \overline{x} = x - b_{dec}$$
+  $$ z = ReLU(W^{enc}\overline{x} + b_{enc})$$
+  $$\hat{x} = W^{dec}z + b_{dec}$$
+
+The system is clearly overdetermined, so we enforce some additional constraints:
+<ul>
+   <li> Let $x$ denote the activations of the neural network at the hidden layer, $z$ be the latent variable, and $x_{rec}$ denote the reconstructed activations from the decoder of the autoencoder. The training objective is given by $MSE(x_{rec}, x) + \lambda ||z||_{1}, where $\lambda$ is a hyperparameter known as the *sparsity*. In particular, the model is encouraged to activate as few of the coordinates of $z$ as possible while still accurately reconstructing the activations. </li>
+
+   <li> The autoencoder can overcome the sparsity construct by scaling a sparse latent variable in the decoding stage. To prevent this maladaptive strategy, we enforce that the columns of $W^{dec}$ to be of unit norm. This imposes constraints on the gradients of the decoder (namely that the gradient is in fact orthogonal to the weights themselves - fun exercise in identifying the tangent bundle of the unit sphere) which we manually impose after every backward pass.  </li>
+</ul>
+
+For the current round of experiments, the autoencoder is trained using a random subset of 700,000 examples from the data used to train the model (we couldn't use all 2,000,000 due to memory constraints). Every epoch, we measure the portion of training samples on which each coordinate in the latent variable activates. 
+
+
+For the model with 16384 neurons trained with a sparsity value of $.001$, the log-density of the neuron activations after 5 epochs is given below.
+
+<img align ="left" height="300" src="images/log_density.png">
+
+
+Unlike Bricken et. al., we actually don't obtain a bimodal distribution, seeming to completely avoid the 'ultra-low density cluster' of loc. cit. This doesn't feel especially surprising given how fundamentally different the models and data are.
+
+
+
+
+<h3> Interpreting individual neurons <a name = 'interp'></a></h3>
+
+Many of the learned features activate in response to highly specific contexts which correspond to semantically meaningful attributes of the underlying data.
+
+
+<h4> Location Specific Neurons </h4>
+
+Unlike the case of language modeling, the position of a given token in our data has a fixed meaning - it counts the number of summands in the $K$-groups of the input. As such, one might expect that the model learns features that are specific to a certain context.
+
+Indeed, the autoencoder learns to devote hundreds of neurons to activating almost exclusively to tokens in a certain position.
+
+
+
+
 
 
 

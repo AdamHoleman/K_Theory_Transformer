@@ -327,7 +327,7 @@ Neuron 9256 fires exclusively at the first position, and so its effect on the ou
 <img align ="left" height="300" src="images/neuron_9256_summands.png">
 
 
-<br> 
+<br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br> <br>
 
 Moreover, due to the auto-regressive mask in the transformer model, the neuron doesn't have access to any information about the number of $\mathbb{Z}/p^2$ summands other than information implicitly present in the input.
 

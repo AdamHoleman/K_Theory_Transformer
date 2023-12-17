@@ -284,12 +284,15 @@ The system is clearly overdetermined, so we enforce some additional constraints:
    <li> The autoencoder can overcome the sparsity construct by scaling a sparse latent variable in the decoding stage. To prevent this maladaptive strategy, we enforce that the columns of $W^{dec}$ to be of unit norm. This imposes constraints on the gradients of the decoder (namely that the gradient is in fact orthogonal to the weights themselves - fun exercise in identifying the tangent bundle of the unit sphere) which we manually impose after every backward pass.  </li>
 </ul>
 
+
+<img align ="left" height="300" src="images/log_density.png">
+
 For the current round of experiments, the autoencoder is trained using a random subset of 700,000 examples from the data used to train the model (we couldn't use all 2,000,000 due to memory constraints). Every epoch, we measure the portion of training samples on which each coordinate in the latent variable activates. 
 
 
 For the model with 16384 neurons trained with a sparsity value of $.001$, the log-density of the neuron activations after 5 epochs is given below.
 
-<img align ="left" height="300" src="images/log_density.png">
+
 
 
 Unlike Bricken et. al., we actually don't obtain a bimodal distribution, seeming to completely avoid the 'ultra-low density cluster' of loc. cit. This doesn't feel especially surprising given how fundamentally different the models and data are.
@@ -318,11 +321,12 @@ For example, neuron 2047 fires exclusively at position 0, neuron 9143 fires exlc
 The location specific neurons often exhibit interpretable behavior. I'm in the process of organizing the learned features in to a compelling story right now so I won't say much here. For now, I will simply give an example of a highly specific feature.
 
 
+<img align ="left" height="300" src="images/neuron_9256_summands.png">
+
 Neuron 9256 fires exclusively at the first position, and so its effect on the output logits will govern the model's predictions for the number of $\mathbb{Z}/p^{2}$ summands present in the $K$-theory. Intriguingly, neuron 9256 fires exclusively on datapoints where there is a single $\mathbb{Z}/p^2$ summand. Such datapoints only account for about 3% of all the examples in the data.
 
 Moreover, due to the auto-regressive mask in the transformer model, the neuron doesn't have access to any information about the number of $\mathbb{Z}/p^2$ summands other than information implicitly present in the input.
 
-<img align ="left" height="300" src="images/neuron_9256_summands.png">
 
 
 

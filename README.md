@@ -322,6 +322,7 @@ The location specific neurons often exhibit interpretable behavior. I'm in the p
 
 Neuron 9256 fires exclusively at the first position, and so its effect on the output logits will govern the model's predictions for the number of $\mathbb{Z}/p^{2}$ summands present in the $K$-theory. Intriguingly, neuron 9256 fires exclusively on datapoints where there is a single $\mathbb{Z}/p^2$ summand. Such datapoints only account for about 3% of all the examples in the data.
 
+The histogram below exhibits the number of $\mathbb{Z}/p^2$ summands in the datapoints on which neuron 9256 activates and the scatterplot indicates the level at which the neuron activates on each of these datapoints. 
 
 
 <img align ="left" height="300" src="images/neuron_9256_summands.png">

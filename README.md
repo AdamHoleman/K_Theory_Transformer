@@ -343,7 +343,7 @@ Moreover, due to the auto-regressive mask in the transformer model, the neuron d
 
 The probing experiments listed above begin to give some insight in to the inner workings of the $K$-theory transformer, but we're still a ways off from being able to 'reverse engineer' the underlying algorithm (a success here would be to recover an algorithm equivalent to Algorithm 1 which was comparably simple and demonstrate that the transformer was essentially carrying out this algorithm). Ultimately, this is a test case that we hope to apply to situations where the analogue of Algorithm 1 is not known, so we will also need to consider ways of discovering the salient features used by the model without knowing them in advance.
 
-<h3> <ins> Interventional Experiments for Hypothesis Testing </ins></h3>
+<h3> <ins> Interventional Experiments </ins></h3>
 
 The probing experiments allow us to formulate hypotheses about the output of the model and we could test these hypotheses by intervening on the activations. 
 
